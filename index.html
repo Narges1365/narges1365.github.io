@@ -428,6 +428,12 @@
             .margins().left += 27;
             //.keyAccessor(function(d) {return +d.key[1];})
             //.valueAccessor(function(d) {return +d.value - 500;});
+        var heatColors = ["#6363FF", "#6373FF", "#63A3FF", "#63E3FF", "#63FFFB", "#63FFCB",
+            "#63FF9B", "#63FF6B", "#7BFF63", "#BBFF63", "#DBFF63", "#FBFF63",
+            "#FFD363", "#FFB363", "#FF8363", "#FF7363", "#FF6364"];
+        var heatmapColor = d3.scaleLinear()
+            .domain([0, 2000])
+            .range(["#6363FF",  "#FF6364"]);
 
         heatMapChart
             .width(600)
@@ -439,12 +445,25 @@
             .valueAccessor(function(d) {
                 return d.key[1]; })
             .title(function(d) {
-                return "Hour: " + d.key[0] + "\n" +
-                    "Day: " + d.key[1] + "\n" +
-                    "Count: " + d.value;})
+                return d.value;})
             .colorAccessor(function(d) { return d.value; })
-            .colors(["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"])
-            .calculateColorDomain();
+            //.colors(["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"])
+            .colors(function(d){
+                //console.log(dayHourGroup.top(1)[0].value);
+                //console.log(dayHourGroup.bottom(1));
+                //console.log(d);
+                var maxValue = dayHourGroup.top(1)[0].value;
+                if (d==0){
+                    return "#FFFFFF"
+                }
+
+                return d3.scaleLinear()
+                    .domain([0, maxValue])
+                    .range(["#6363FF",  "#FF6364"])(d); });
+            //.colors(["#6363FF", "#6373FF", "#63A3FF", "#63E3FF", "#63FFFB", "#63FFCB",
+            //    "#63FF9B", "#63FF6B", "#7BFF63", "#BBFF63", "#DBFF63", "#FBFF63",
+            //    "#FFD363", "#FFB363", "#FF8363", "#FF7363", "#FF6364"])
+            //.calculateColorDomain();
 
 /*
         carIDChart
