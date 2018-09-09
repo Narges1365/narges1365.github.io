@@ -42,6 +42,18 @@
       <div class="row">
         <div class="col-sm-6">
           <div class="row">
+              <div class="col-sm-12">
+                  <div class="chart-wrapper">
+                      <div class="chart-title">
+                          Hours of Day Heatmap
+                      </div>
+                      <div class="chart-stage">
+                          <div id="heatmap"></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
             <!-- Resources Pie -->
             <div class="col-sm-6">
               <div class="chart-wrapper">
@@ -122,8 +134,16 @@
             background-size:auto 100%;
             background-position:center top;
         }
+         .heat-box {
+             stroke: #E6E6E6;
+             stroke-width: 2px;
+         }
 
     </style>
+
+
+
+</div>
 
 <div id="search">Type the Car ID to show the detailed information:</div>
     <div class="row">
@@ -194,6 +214,7 @@
         visCount = dc.dataCount("#data-count"),
         visTable = dc.dataTable(".dc-data-table"),
         select2 = dc.selectMenu('#car-id-chart'),
+        heatMapChart = dc.heatMap("#heatmap"),
         searchBox = dc.textFilterWidget("#search");
 
     // Full dataset could give issues because of gzip
@@ -232,10 +253,20 @@
         //var formatUTCDateWithTime = d3.timeFormat("%Y-%m-%d %H:%M:%S");
         var parseDate = d3.timeParse("%Y-%m-%d");
         var parseDateWithTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
-
+        var formatHour = d3.timeFormat("%H");
+        var formatDay = d3.timeFormat("%a");
+        var ii = 0;
         data.forEach(function (d) {
             d["FullTimestamp"] = parseDateWithTime(d["Timestamp"]);
             d["Day"] = parseDate(formatUTCDate(parseUTCDate(d["Timestamp"]))); //dateFormat(d["Timestamp"]);
+            d["Hour"] = formatHour(parseDateWithTime(d["Timestamp"]));
+            d["Weekday"] = formatDay(parseDateWithTime(d["Timestamp"]));
+
+            ii += 1;
+            if (ii < 10){
+                //console.log(d["Hour"]);
+                console.log(d["Day"]);
+            }
             if (d["gate-name"]== "ranger-base"){
                 d["gate-type"] = d["gate-name"];
             }
@@ -256,6 +287,8 @@
         var gateTypeDim = ndx.dimension(function (d) { return d["gate-type"]; });
         var dateDim = ndx.dimension(function (d) { return d["Day"]; });
         var dateTimeDim = ndx.dimension(function (d) { return d["FullTimestamp"]; });
+        var dayHourDim = ndx.dimension(function(d) { return [d["Hour"], d["Weekday"]]; });
+
         //var overviewDim = ndx.dimension(function(d) { return d["Timestamp"]; });
 
         var carTypeGroup = carTypeDim.group();
@@ -281,6 +314,7 @@
         var gateTypeGroup = gateTypeDim.group();
         var dateGroup = dateDim.group();//.reduceCount();
         var dateTimeGroup = dateTimeDim.group();
+        var dayHourGroup = dayHourDim.group().reduceCount();
         //var overviewGroup = overviewDim.group();
         //var dateGroup = dateDim.group();
         //var overviewRunGroup = overviewRunDimension.group();
@@ -395,6 +429,23 @@
             //.keyAccessor(function(d) {return +d.key[1];})
             //.valueAccessor(function(d) {return +d.value - 500;});
 
+        heatMapChart
+            .width(600)
+            .height(140)
+            .dimension(dayHourDim)
+            .group(dayHourGroup)
+            .keyAccessor(function(d) {
+                return d.key[0]; })
+            .valueAccessor(function(d) {
+                return d.key[1]; })
+            .title(function(d) {
+                return "Hour: " + d.key[0] + "\n" +
+                    "Day: " + d.key[1] + "\n" +
+                    "Count: " + d.value;})
+            .colorAccessor(function(d) { return d.value; })
+            .colors(["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"])
+            .calculateColorDomain();
+
 /*
         carIDChart
             .dimension(carIDDim)
@@ -466,7 +517,7 @@
             .dimension(carIDDim)
             .group(carIDGroup)
             .multiple(false)
-            .numberVisible(15)
+            .numberVisible(8)
             .order(function (a,b) {
                 return a.value > b.value ? -1 : b.value > a.value ? 1 : 0;
             })
